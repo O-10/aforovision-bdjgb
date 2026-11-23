@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AforoVision · Biblioteca Departamental Jorge Garcés Borrero</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div id="alertaGlobal" class="alerta-banner" role="alert" aria-live="assertive">
+    <div class="icon">⚠️</div>
+    <div>
+      <strong id="alertaTitulo">AFORO EXCEDIDO</strong>
+      <span id="alertaTexto"></span>
+    </div>
+    <button class="btn small ghost" id="btnCerrarAlerta" style="margin-left:auto">Entendido</button>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">AF</div>
+      <div>
+        <h1>AforoVision · BDJGB</h1>
+        <p>Control de aforo por visión computarizada · SG-SST pos-sismo</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="clock" id="hora">--</span>
+      <button class="btn" id="btnSonido">🔇 Activar sonido</button>
+      <button class="btn" id="btnFuentes">📄 Fuentes técnicas</button>
+      <a class="btn" href="/api/reporte.csv">⬇ Reporte CSV</a>
+    </div>
+  </header>
+  <div class="developer">
+    Desarrollado por <strong>Oscar Iván Solarte Cerón</strong> · 3154013707 ·
+    Profesional SST · Resolución 3702 de 2023
+  </div>
+
+  <main>
+    <section class="resumen">
+      <div class="stat" style="--accent: var(--cyan)">
+        <div class="label">Personas en control</div>
+        <div class="valor" id="statPersonas">0</div>
+        <div class="sub">Suma de zonas activas</div>
+      </div>
+      <div class="stat" style="--accent: var(--green)">
+        <div class="label">Zonas activas</div>
+        <div class="valor" id="statZonas">0 / 4</div>
+        <div class="sub">Fuentes en operación</div>
+      </div>
+      <div class="stat" style="--accent: var(--red)">
+        <div class="label">Alertas activas</div>
+        <div class="valor" id="statAlertas">0</div>
+        <div class="sub">Exceso de aforo detectado</div>
+      </div>
+      <div class="stat" style="--accent: var(--violet)">
+        <div class="label">Motor de visión</div>
+        <div class="valor" style="font-size:1rem;margin-top:10px" id="statMotor">—</div>
+        <div class="sub" id="statModelo">Detección de personas</div>
+      </div>
+    </section>
+
+    <section class="panel consulta-panel" id="panelConsulta">
+      <div class="panel-head">
+        <div>
+          <h2>Consultar aforo por área</h2>
+          <p class="muted" style="margin:4px 0 0">Elija el área: el sistema activa su cámara, muestra el conteo en tiempo real y mantiene las demás en espera.</p>
+        </div>
+        <button class="btn small" id="btnVerTodas" hidden>← Ver todas las zonas</button>
+      </div>
+      <div class="selector-areas" id="selectorAreas"></div>
+      <div class="consulta-destacado" id="consultaDestacado" hidden>
+        <div class="consulta-num">
+          <span id="consultaCount">0</span><small id="consultaCap">/ 0 personas</small>
+        </div>
+        <div class="consulta-info">
+          <strong id="consultaZona">—</strong>
+          <span id="consultaEstado" class="badge">—</span>
+          <p class="muted" id="consultaAviso"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel domo-bar">
+      <div>
+        <h2>El Domo · Exposición ARTECA</h2>
+        <p class="muted" id="domoDescripcion">Pisos 2 y 3 con operación alterna · 56 y 54 personas · combinado 110.</p>
+        <div class="domo-controles">
+          <div class="segmentado" id="segmentoDomo">
+            <button data-modo="alterno" class="activo">Alterno</button>
+            <button data-modo="ambos">Ambos pisos</button>
+          </div>
+          <label class="campo">Piso activo
+            <select id="pisoActivo">
+              <option value="domo_p2">Piso 2 · 56 pers.</option>
+              <option value="domo_p3">Piso 3 · 54 pers.</option>
+            </select>
+          </label>
+          <label class="campo">Rotación (min)
+            <input type="number" id="minutosDomo" min="1" max="120" value="15" style="width:78px">
+          </label>
+          <button class="btn primary small" id="btnAplicarDomo">Aplicar</button>
+        </div>
+      </div>
+      <div>
+        <p class="muted" style="margin-top:2px">Aforo combinado P2 + P3</p>
+        <div class="combinado">
+          <div class="num" id="domoTotal">0 <small style="color:var(--muted);font-size:.7rem">/ 110</small></div>
+          <div class="barra" id="barraDomo"><i style="width:0%"></i></div>
+        </div>
+        <p class="muted" id="domoEstado" style="margin-top:8px">—</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Video en vivo y detección</h2>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="selectZona" aria-label="Zona a visualizar"></select>
+            <span id="estadoVideo" class="badge">—</span>
+          </div>
+        </div>
+        <div class="video-wrap">
+          <img id="video" alt="Video de la zona seleccionada">
+          <div class="video-overlay">
+            <span class="chip" id="chipFuente">Fuente: —</span>
+            <span class="chip" id="chipConteo">0 / 0</span>
+          </div>
+        </div>
+        <div class="video-controls">
+          <span class="muted">Ajuste manual:</span>
+          <button class="btn small" id="btnMenos">− 1</button>
+          <span class="manual-count" id="manualCount">0</span>
+          <button class="btn small" id="btnMas">+ 1</button>
+          <button class="btn small" id="btnFijarManual">Fijar valor</button>
+          <button class="btn small ghost" id="btnRestaurar">↺ Restaurar automático</button>
+          <span class="muted" style="margin-left:auto">El conteo manual requiere verificación del operario.</span>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <h2>Configuración de la fuente</h2>
+        <form id="formFuente" class="form-grid">
+          <label class="campo full">Tipo de fuente
+            <select id="fuenteTipo">
+              <option value="demo">Demo / simulación</option>
+              <option value="camara">Cámara (índice o RTSP)</option>
+              <option value="video">Archivo de video</option>
+              <option value="imagen">Imagen fija</option>
+              <option value="sin_fuente">Sin fuente</option>
+              <option value="manual">Conteo manual</option>
+            </select>
+          </label>
+          <label class="campo full">Valor (ej. 0, rtsp://..., C:\ruta\video.mp4)
+            <input type="text" id="fuenteValor" placeholder="0 para la cámara web">
+          </label>
+          <label class="campo">FPS
+            <input type="number" id="fuenteFps" min="0.5" max="10" step="0.5" value="3">
+          </label>
+          <label class="campo">Confianza
+            <input type="number" id="fuenteConf" min="0.1" max="0.9" step="0.05" value="0.35">
+          </label>
+          <label class="campo">ROI x1
+            <input type="number" id="roiX1" min="0" max="1" step="0.01" value="0">
+          </label>
+          <label class="campo">ROI y1
+            <input type="number" id="roiY1" min="0" max="1" step="0.01" value="0">
+          </label>
+          <label class="campo">ROI x2
+            <input type="number" id="roiX2" min="0" max="1" step="0.01" value="1">
+          </label>
+          <label class="campo">ROI y2
+            <input type="number" id="roiY2" min="0" max="1" step="0.01" value="1">
+          </label>
+          <button class="btn primary full" type="submit">Aplicar configuración</button>
+        </form>
+        <div class="info-zona">
+          <h3 id="infoTitulo">—</h3>
+          <p id="infoDetalle"></p>
+          <div class="nota" id="infoNota" hidden></div>
+          <p class="muted" id="infoFuente"></p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="zonas">
+      <h2>Zonas monitorizadas</h2>
+      <div class="cards" id="zonasGrid"></div>
+    </section>
+
+    <section class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Registro de eventos</h2><span class="muted" id="eventosCount">0 eventos</span></div>
+        <div class="eventos" id="eventos"><div class="vacio">Sin eventos registrados.</div></div>
+      </div>
+      <div class="panel">
+        <h2>Parámetros y trazabilidad</h2>
+        <table class="tabla">
+          <thead><tr><th>Zona</th><th>Área</th><th>Índice</th><th>Operativo</th></tr></thead>
+          <tbody id="tablaParametros"></tbody>
+        </table>
+        <p class="muted" style="margin-top:12px;line-height:1.5">
+          Los aforos se derivan de NSR-10 Título K (4,60 m²/persona en galerías y salas de lectura)
+          y de los conceptos técnicos SG-SST. La visión computarizada es una herramienta de apoyo:
+          el operario confirma y gestiona el control de acceso.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span><strong>AforoVision · BDJGB</strong> · Uso interno para control de aforo y evacuación</span>
+    <span>Desarrollado por <strong>Oscar Iván Solarte Cerón</strong> · 3154013707 · Santiago de Cali</span>
+  </footer>
+
+  <div class="modal" id="modalFuentes">
+    <div class="modal-contenido">
+      <button class="btn small ghost cerrar" id="btnCerrarFuentes">✕ Cerrar</button>
+      <h2>Fuentes técnicas y parametrización</h2>
+      <p class="muted" id="modalSubtitulo"></p>
+      <div id="modalFuentesContenido"></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

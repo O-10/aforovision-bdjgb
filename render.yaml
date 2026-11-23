@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: aforo-bdjgb
+    env: docker
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: AFORO_ORIGIN
+        value: http://127.0.0.1:8000
+      - key: AFORO_DATA_DIR
+        value: /data
+    disk:
+      name: aforo-datos
+      mountPath: /data
+      sizeGB: 1

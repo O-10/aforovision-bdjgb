@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.log
+herramientas/cloudflared.exe
+data/eventos.jsonl
+data/config.json
+data/tunel.out
+data/tunel.log
+data/enlace_publico.txt
+data/reportes/
