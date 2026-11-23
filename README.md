@@ -102,16 +102,18 @@ La medición con cámara del celular permite ejecutar todo en la nube: el servid
 
 ### Opción recomendada: Render, plan siempre activo
 
-1. Crear cuenta en <https://render.com> y conectar el repositorio de GitHub (antes hay que inicializar Git y subir el proyecto; `herramientas/cloudflared.exe` y `data/` no se suben).
+1. Crear cuenta en <https://render.com> y conectar el repositorio `https://github.com/O-10/aforovision-bdjgb`. Git ya quedó inicializado y el código subido; `herramientas/cloudflared.exe` y `data/` no se suben.
 2. **New → Blueprint** y elegir `render.yaml`. Render usa `Dockerfile` y aplica:
-   - plan `starter` (no se duerme; el plan Free se suspende por inactividad);
+   - plan de compute `0.5c-512mb` (0.5 CPU / 512 MB, **USD 7/mes**, siempre activo; el plan `free` se suspende por inactividad);
    - `AFORO_ORIGIN=http://127.0.0.1:8000` para el motor interno;
    - `AFORO_DATA_DIR=/data` con disco persistente de 1 GB.
 3. El contenedor levanta dos procesos: `server.py` en `8000` (solo interno) y `public_server.py` en `$PORT` con HTTPS público.
-4. Compartir la URL que asigne Render, por ejemplo `https://aforo-bdjgb.onrender.com`. Para usar `https://aforo.biblioteca.gov.co`, agregar el dominio en Render y configurar el DNS.
+4. Compartir la URL que asigne Render, por ejemplo `https://aforo-bdjgb.onrender.com`. Para usar `https://aforo.biblioteca.gov.co`, hay que ser titular del dominio, comprarlo en un registrador y agregarlo en Render con su DNS.
 5. Verificar `/health` y descargar `/api/reporte.csv` desde el celular.
 
-> Los planes gratuitos de Render/Railway/Fly se duermen y el primer acceso tarda; para estar disponible “en cualquier momento” usa un plan de pago siempre activo. `config.json`, `eventos.jsonl` y `reportes/` quedan en `/data` y sobreviven a reinicios. En la nube **no se usa la cámara del PC**: cada visita mide con su propio teléfono.
+**Costo estimado:** workspace Hobby USD 0 + compute USD 7/mes + disco 1 GB USD 0,25/mes ≈ **USD 7,25/mes** (ancho de banda: 5 GB incluidos, después USD 0,15/GB). El subdominio `*.onrender.com` con HTTPS es gratis; los dominios propios se compran aparte (Render incluye 2 sin cargo en Hobby).
+
+> El plan de compute y el dominio son **cosas distintas**: el plan paga el servidor encendido 24/7; el dominio es solo el nombre. Puedes usar el subdominio gratis y no comprar dominio. `config.json`, `eventos.jsonl` y `reportes/` quedan en `/data` y sobreviven a reinicios. En la nube **no se usa la cámara del PC**: cada visita mide con su propio teléfono.
 
 ### Probar la imagen antes de subir (opcional)
 
